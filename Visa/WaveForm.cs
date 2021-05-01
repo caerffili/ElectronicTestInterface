@@ -9,19 +9,19 @@ using System.Text;
 public class WaveForm
 {
     private double[] _times;
-    private List<double[]> _values;
+    private double[] _values;
 
-    public WaveForm(double[] times, List<double[]> values)
-    {
-        _times = times;
-        _values = values;
-    }
+ //   public WaveForm(double[] times, values)
+  //  {
+   //     _times = times;
+   //     _values = values;
+   // }
 
     public WaveForm(double[] times, double[] values)
     {
         _times = times;
-        _values = new List<double[]>();
-        _values.Add(values);
+        _values = values;
+       // _values.Add(values);
     }
 
     public double[] Times
@@ -30,7 +30,7 @@ public class WaveForm
         set { _times = value; }
     }
 
-    public List<double[]> Values
+    public double[] Values
     {
         get { return _values; }
         set { _values = value; }
@@ -43,11 +43,11 @@ public class WaveForm
     {
         StringBuilder sb = new StringBuilder(_times.Length * 10);
 
-        int valuesCount = _values.Count;
+        int valuesCount = _values.Count();
         int timesCount = _times.Count();
 
         // Header
-        sb.Append("TIME(s);");
+        sb.Append("TIME(s),");
         for (int j = 1; j < valuesCount + 1; j++)
         {
             sb.Append("CH");
@@ -60,12 +60,8 @@ public class WaveForm
         for (int i = 0; i < timesCount; i++)
         {
             sb.Append(_times[i]);
-            sb.Append(";");
-            for (int j = 0; j < valuesCount; j++)
-            {
-                sb.Append(_values[j][i]);
-                sb.Append(";");
-            }
+            sb.Append(",");
+            sb.Append(_values[i]);
             sb.Append("\n");
         }
 
@@ -115,27 +111,5 @@ public class WaveForm
 	}
 	*/
 
-    /// <summary>
-    /// Binarize Waveform Values given a threshold
-    /// </summary>
-    /// <returns></returns>
-    public WaveForm Threshold(double threshold)
-    {
-        // Apply threshold to all channels
-        for (int channelIndex = 0; channelIndex < _values.Count; channelIndex++)
-        {
-            for (int index = 0; index < _values[channelIndex].Length; index++)
-            {
-                if (_values[channelIndex][index] >= threshold)
-                {
-                    _values[channelIndex][index] = 1;
-                }
-                else
-                {
-                    _values[channelIndex][index] = 0;
-                }
-            }
-        }
-        return this;
-    }
+
 }

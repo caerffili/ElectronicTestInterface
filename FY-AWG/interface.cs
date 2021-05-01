@@ -484,7 +484,7 @@ namespace FY_AWG
             serialPort = new SerialPort();
 
             // Allow the user to set the appropriate properties.
-            serialPort.PortName = "COM17";
+            serialPort.PortName = "COM18";
             serialPort.BaudRate = 115200;
             serialPort.Parity = Parity.None;
             serialPort.DataBits = 8;

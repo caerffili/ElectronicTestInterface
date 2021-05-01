@@ -14,10 +14,38 @@ namespace Visa
         RAW
     }
 
-    public enum AcquireMemoryDepth
+    public enum VoltUnits
     {
-        NORMAL,
-        LONG
+        V = 1,
+        mV = 1000,
+        uV = 1000000
+    }
+
+    public enum TimeUnits
+    {
+        S = 1,
+        mS = 1000,
+        uS = 1000000,
+        nS = 1000000000
+    }
+
+    public enum InternalState
+    {
+        unknow = 0,
+        Aquired = 1,
+        TriggerReady = 8192
+    }
+
+    public enum MemorySize
+    {
+        MS_7K,
+        MS_70K,
+        MS_700K,
+        MS_7M,
+        MS_14K,
+        MS_140K,
+        MS_1_4M,
+        MS_14M
     }
 
     public enum TriggerSweep
@@ -41,9 +69,9 @@ namespace Visa
         static MessageBasedSession session;
         static ResourceManager resourceManager;
 
-        static string _model;
-        static string _serialNumber;
-        static string _swVersion;
+        public string _model;
+        public string _serialNumber;
+        public string _swVersion;
        // Channel[] channels;
 
 
@@ -85,6 +113,8 @@ namespace Visa
             _model = fields[1];
             _serialNumber = fields[2];
             _swVersion = fields[3];
+
+            Console.WriteLine("Device details: {0} {1} {2}", _model, _serialNumber, _swVersion);
         }
 
         public string[] GetResources()
@@ -103,90 +133,201 @@ namespace Visa
             return results;
         }
 
-        public void SetWaveformPointsMode(PointsMode value)
+        /*public void SetWaveformPointsMode(PointsMode value)
         {
             Write(":WAVeform:POINts:MODE " + value);
-        }
+        }*/
 
-        public void SetAcquireMemoryDepth(AcquireMemoryDepth memoryDepth)
+        public void SetAcquireMemorySize(MemorySize memorySize)
         {
-            Write(":ACQuire:MEMDepth " + memoryDepth);
+            Write(":MEMORY_SIZE " + memorySize);
+            Console.WriteLine();
         }
 
-        public void SetTriggerSweep(TriggerSweep memoryDepth)
+        /*public void SetTriggerSweep(TriggerSweep memoryDepth)
         {
             Write(":TRIGger:EDGE:SWEep " + memoryDepth);
-        }
+        }*/
 
-        public void WaitTriggerStop()
+
+        public void WaitTriggerReady()
         {
-            while (GetTriggerStatus() != TriggerStatus.STOP)
+            /*  while (true)
+             {
+                  GetInternalState();
+                  Thread.Sleep(50);
+              }
+            */
+            while ((GetInternalState() & (int)InternalState.TriggerReady) == 1)
             {
                 Thread.Sleep(50);
             }
         }
 
-        public TriggerStatus GetTriggerStatus()
+        public void WaitTriggerStop()
         {
-            Write(":TRIGger:STATus?");
+          /*  while (true)
+           {
+                GetInternalState();
+                Thread.Sleep(50);
+            }
+          */
+            while ( (GetInternalState() & (int)InternalState.Aquired) == 0)
+            {
+                Thread.Sleep(50);
+            }
+        }
+
+        public int GetInternalState()
+        {
+            Write(":INR?");
             String returnString = ReadString();
-
-            if (returnString == "T'D") return TriggerStatus.TD;
-
-            return (TriggerStatus)Enum.Parse(typeof(TriggerStatus), returnString);
+            Console.WriteLine(returnString);
+           return int.Parse(returnString.Replace("INR", ""));
         }
 
         public void Close()
         {
             Write(":KEY:FORCE");
+            Console.WriteLine();
         }
 
         public void Arm_Acquisition()
         {
             Write(":ARM_ACQUISITION");
-        }
-        public void Wait()
-        {
-            Write(":WAIT");
+            Console.WriteLine();
         }
 
-        public void Run()
+        /*public void Wait()
+        {
+            Write(":WAIT");
+        }*/
+
+        /*public void Run()
         {
             Write(":RUN");
-        }
+        }*/
 
         public void Stop()
         {
             Write(":STOP");
+            Console.WriteLine();
         }
 
-        public double GetScale(int channel)
+        public double GetTDiv()
         {
-            Write(":CHAN" + channel + ":SCAL?");
-            return double.Parse(ReadString());
+            Write(":TDIV?");
+            String strval = ReadString();
+
+            TimeUnits units = TimeUnits.S;
+            int start = 5;
+            int end = strval.Length - 1;
+
+            if (strval.Substring(strval.Length - 1, 1).ToLower() == "s")
+            {
+                units = TimeUnits.S;
+                end = strval.Length - 1;
+            }
+            if (strval.Substring(strval.Length - 2, 2).ToLower() == "ms")
+            {
+                units = TimeUnits.mS;
+                end = strval.Length - 2;
+            }
+            if (strval.Substring(strval.Length - 2, 2).ToLower() == "us")
+            {
+                units = TimeUnits.uS;
+                end = strval.Length - 2;
+            }
+            if (strval.Substring(strval.Length - 2, 2).ToLower() == "ns")
+            {
+                units = TimeUnits.nS;
+                end = strval.Length - 2;
+            }
+
+            double TDiv = double.Parse(strval.Substring(start, end - start), System.Globalization.NumberStyles.Float) / (double)units;
+            Console.WriteLine("TDiv {0:E}s", TDiv);
+            return TDiv;
         }
 
-        public double GetOffset(int channel)
+        public double GetVDiv(int channel)
         {
-            Write(":CHAN" + channel + ":OFFS?");
-            return double.Parse(ReadString());
+            Write("C" + channel + ":VDIV?");
+            String strval = ReadString();
+
+            VoltUnits units = VoltUnits.V;
+            int start = 8;
+            int end = strval.Length - 1;
+
+            if (strval.Substring(strval.Length - 1, 1).ToLower() == "v")
+            {
+                units = VoltUnits.V;
+                end = strval.Length - 1;
+            }
+            if (strval.Substring(strval.Length - 2, 2).ToLower() == "mv")
+            {
+                units = VoltUnits.mV;
+                end = strval.Length - 2;
+            }
+            if (strval.Substring(strval.Length - 2, 2).ToLower() == "uv")
+            {
+                units = VoltUnits.uV;
+                end = strval.Length - 2;
+            }
+
+            double VDiv = double.Parse(strval.Substring(start, end - start), System.Globalization.NumberStyles.Float) / (double)units;
+            Console.WriteLine("VDiv {0}v", VDiv);
+            return VDiv;
         }
 
-        public double GetTimebaseScale()
+        public double GetVOffset(int channel)
         {
-            // TODO: Delayed option
-            Write(":TIMebase:SCALe?");
-            return double.Parse(ReadString());
+            Write("C" + channel + ":OFST?");
+            String strval = ReadString();
+
+            VoltUnits units = VoltUnits.V;
+            int start = 8;
+            int end = strval.Length - 1;
+
+            if (strval.Substring(strval.Length - 1, 1).ToLower() == "v")
+            {
+                units = VoltUnits.V;
+                end = strval.Length - 1;
+            }
+            if (strval.Substring(strval.Length - 2, 2).ToLower() == "mv")
+            {
+                units = VoltUnits.mV;
+                end = strval.Length - 2;
+            }
+            if (strval.Substring(strval.Length - 2, 2).ToLower() == "uv")
+            {
+                units = VoltUnits.uV;
+                end = strval.Length - 2;
+            }
+
+            double Offset = double.Parse(strval.Substring(start, end - start), System.Globalization.NumberStyles.Float) / (double)units;
+            Console.WriteLine("Offset {0}v", Offset);
+            return Offset;
         }
 
-        public double GetTimebaseOffset()
+        public double GetSampleRate()
+        {
+            Write(":SAMPLE_RATE?");
+            String strval = ReadString();
+            double retval = double.Parse(strval.Replace("SARA", "").Replace("Sa/s", "").Replace("GSa/s", ""), System.Globalization.NumberStyles.Float);
+            Console.WriteLine("Sample rate {0} Sa/s", retval);
+            return retval;
+        }
+
+        /*public double GetTimebaseOffset()
         {
             // TODO: Delayed option
             Write(":TIMebase:OFFS?");
-            return double.Parse(ReadString());
-        }
+            String retval = ReadString();
+            Console.WriteLine(retval);
+            return 0;
+        }*/
 
-        public double GetAcquireSamplingRate(int channel)
+        /*public double GetAcquireSamplingRate(int channel)
         {
             if (channel > channelQty)
             {
@@ -195,13 +336,13 @@ namespace Visa
             // TODO: Digital channel of DS1000D not supported			
             Write(":ACQuire:SAMPlingrate? CHANnel" + channel);
             return double.Parse(ReadString());
-        }
+        }*/
 
         public String GetWaveform_Setup()
         {
             Write("WAVEFORM_SETUP?");
             byte[] response = Read();
-
+            Console.WriteLine(Encoding.UTF8.GetString(response, 0, response.Length));
             return Encoding.UTF8.GetString(response, 0, response.Length);
         }
 
@@ -215,53 +356,36 @@ namespace Visa
 
         public WaveForm GetWaveform(int channel)
         {
-        
-            //Write(":WAVEFORM:DATA? CHAN" + channel);
-            Write("C1:WAVEFORM? DAT2");
+            double VDiv = GetVDiv(channel);
+            double VOffset = GetVOffset(channel);
+            double sampleRate = GetSampleRate();
+
+            Write("C" + channel + ":WAVEFORM? DAT2");
             byte[] response = Read();
+        
+            long sampleCount = response.Length - 22 - 2;
+            Console.WriteLine("Samples received {0}.", sampleCount);
 
-           Console.WriteLine(Encoding.UTF8.GetString(response, 0, response.Length));
-
-            long pointsCount = response.Length - 10;
-
-            double[] data = new double[pointsCount];
-            double[] times = new double[pointsCount];
-
-            double scale = GetScale(channel);
-            double offset = GetOffset(channel);
-            double oscTimeScale = GetTimebaseScale();
-            double oscTimeOffset = GetTimebaseOffset();
-            double sampleRate = GetAcquireSamplingRate(channel);
+            double[] data = new double[sampleCount];
+            double[] times = new double[sampleCount];
 
             double initial, interval;
 
-            // 600 points
-            //T(s) = (<Pt_Num> - 1) * (<Time_Div> / 50) - [(<Time_Div> * 6) - <Time_Offset>]      
-            // > 600 points
-            //T(s) = <Time_Offset> -[ (<Points> - 10) / (1 / (2*<Samp_Rate>)]
+            interval = 1.0 / sampleRate;
 
-            if (pointsCount > 600)
-            {
-                initial = -((1.0 / sampleRate) * (pointsCount / 2)) + oscTimeOffset;
-                interval = 1.0 / sampleRate;
-            }
-            else
-            {
-                initial = -(oscTimeScale * 6) - oscTimeOffset;
-                interval = oscTimeScale / 50;
-            }
-
-            for (int i = 0; i < pointsCount; i++)
+            for (int i = 0; i < sampleCount; i++)
             {
                 // Strip off 10 byte header and loop through data and termination characters
-                int rawData = (int)response[i + 10];
+                int rawData = (int)response[i + 22];
+                if (rawData > 127) rawData -= 255;
 
                 // Scale the vertical data from bytes to volts
                 // A(V) = [(240 - <Raw_Byte>) * (<Volts_Div> / 25) - [(<Vert_Offset> + <Volts_Div> * 4.6)]]
-                data[i] = ((240 - rawData) * scale / 25) - (offset + (scale * 4.6));
-                times[i] = initial + interval * i;
-            }
+                data[i] = rawData * VDiv / 4 - VOffset;
 
+                times[i] = /*initial + */ interval * i;
+            }
+       
             return new WaveForm(times, data);
         }
 
@@ -270,19 +394,22 @@ namespace Visa
         public string ReadString()
         {
             // Read the response; omit end-of-line characters.
-            return session.RawIO.ReadString().TrimEnd('\r', '\n');
+             string retval = session.RawIO.ReadString().TrimEnd('\r', '\n');
+            Console.Write(string.Format("Read {0} bytes from device [{1}]. ", retval.Length, retval));
+            return retval;
         }
 
         public byte[] Read()
         {
             // Rigol DS1102E Long Memory can acquire 1M points (1048576 bytes + 10 bytes header)            
             var readBytes = session.RawIO.Read(1048586, out var status);
-            Console.WriteLine(string.Format("Readed {0} bytes from device with Status {1}", readBytes.Length, status));
+            Console.Write(string.Format("Read {0} bytes from device with Status {1}. ", readBytes.Length, status));
             return readBytes;
         }
 
         public void Write(string str)
         {
+            Console.Write("Writing [{0}]. ", str);
             session.RawIO.Write(str);
             // Give time to process command
             Thread.Sleep(50);
