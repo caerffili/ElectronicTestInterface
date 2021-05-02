@@ -48,6 +48,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DSPLib.cs" />
+    <Compile Include="FFTBin.cs" />
+    <Compile Include="OctaveBand.cs" />
+    <Compile Include="OctaveBin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -45,6 +45,8 @@
             this.chart1 = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.buttonTakeMeasurement = new System.Windows.Forms.Button();
             this.buttonScan = new System.Windows.Forms.Button();
+            this.labelScanning = new System.Windows.Forms.Label();
+            this.comboBoxSmoothing = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.chart1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -139,6 +141,7 @@
             this.chart1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            chartArea1.AxisX.Maximum = 100000D;
             chartArea1.AxisX.Minimum = 1D;
             chartArea1.AxisX.MinorGrid.Enabled = true;
             chartArea1.AxisX.MinorGrid.Interval = 1D;
@@ -156,11 +159,12 @@
             series1.ChartArea = "ChartArea1";
             series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
             series1.Legend = "Legend1";
-            series1.Name = "Series1";
+            series1.Name = "FFT";
             series2.ChartArea = "ChartArea1";
             series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series2.Color = System.Drawing.Color.Red;
             series2.Legend = "Legend1";
-            series2.Name = "Series2";
+            series2.Name = "Smoothed FFT";
             this.chart1.Series.Add(series1);
             this.chart1.Series.Add(series2);
             this.chart1.Size = new System.Drawing.Size(858, 312);
@@ -187,11 +191,34 @@
             this.buttonScan.UseVisualStyleBackColor = true;
             this.buttonScan.Click += new System.EventHandler(this.buttonScan_Click);
             // 
+            // labelScanning
+            // 
+            this.labelScanning.AutoSize = true;
+            this.labelScanning.Location = new System.Drawing.Point(560, 143);
+            this.labelScanning.Name = "labelScanning";
+            this.labelScanning.Size = new System.Drawing.Size(35, 13);
+            this.labelScanning.TabIndex = 13;
+            this.labelScanning.Text = "label6";
+            // 
+            // comboBoxSmoothing
+            // 
+            this.comboBoxSmoothing.FormattingEnabled = true;
+            this.comboBoxSmoothing.Items.AddRange(new object[] {
+            "Octave",
+            "1/3 Octave",
+            "1/6 Octave"});
+            this.comboBoxSmoothing.Location = new System.Drawing.Point(61, 77);
+            this.comboBoxSmoothing.Name = "comboBoxSmoothing";
+            this.comboBoxSmoothing.Size = new System.Drawing.Size(121, 21);
+            this.comboBoxSmoothing.TabIndex = 14;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(882, 510);
+            this.Controls.Add(this.comboBoxSmoothing);
+            this.Controls.Add(this.labelScanning);
             this.Controls.Add(this.buttonScan);
             this.Controls.Add(this.buttonTakeMeasurement);
             this.Controls.Add(this.chart1);
@@ -229,6 +256,8 @@
         private System.Windows.Forms.DataVisualization.Charting.Chart chart1;
         private System.Windows.Forms.Button buttonTakeMeasurement;
         private System.Windows.Forms.Button buttonScan;
+        private System.Windows.Forms.Label labelScanning;
+        private System.Windows.Forms.ComboBox comboBoxSmoothing;
     }
 }
 
